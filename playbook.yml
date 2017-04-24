@@ -1,0 +1,157 @@
+---
+
+- hosts: all
+  become: true
+
+  tasks:
+
+    - name: MANUAL | sudo apt-get update
+      apt:
+        update_cache: yes
+      tags: manual
+
+    - name: MANUAL | sudo apt-get install aptitude
+      apt:
+        name: aptitude
+      tags: manual
+
+    - name: MANUAL | sudo apt-get upgrade
+      apt:
+        upgrade: yes
+        state: latest
+      tags: manual
+
+    - name: MANUAL | sudo apt-add-repository ppa:ansible/ansible
+      apt_repository:
+        filename: ansible-ubuntu-ansible-xenial.list
+        repo: ppa:ansible/ansible
+      tags: manual
+
+    - name: MANUAL | sudo apt-get install ansible 
+      apt:
+        name: ansible
+      tags: manual
+
+    - name: MANUAL | ln -s ~/ubuntu-setup/ansible.cfg ~/.ansible.cfg
+      file:
+        src: ~/ubuntu-setup/ansible.cfg
+        dest: ~/.ansible.cfg
+        state: link
+      become: False
+      tags: manual
+
+    - name: MANUAL | ln -s ~/ubuntu-setup/playbook.yml ~/playbook.yml
+      file:
+        src: ~/ubuntu-setup/playbook.yml
+        dest: ~/playbook.yml
+        state: link
+      become: False
+      tags: manual
+
+    - name: sudo apt-get install vim git terminator zeal zsh curl wget ruby php7.0-cli php7.0-mbstring php7.0-xml php7.0-zip
+      apt:
+        name: '{{ item }}'
+      with_items:
+        - vim
+        - git
+        - terminator
+        - zeal
+        - zsh
+        - curl
+        - wget
+        - ruby
+        - php7.0-cli
+        - php7.0-mbstring
+        - php7.0-xml
+        - php7.0-zip
+
+    - name: ~/.gitconfig
+      file:
+        src: ~/ubuntu-setup/gitconfig
+        dest: ~/.gitconfig
+        state: link
+        force: yes
+      become: False
+
+    - name: git clone git://github.com/robbyrussell/oh-my-zsh.git ~/.oh-my-zsh
+      git:
+        accept_hostkey: yes
+        dest: ~/.oh-my-zsh
+        force: yes
+        recursive: yes
+        repo: git://github.com/robbyrussell/oh-my-zsh.git
+      become: False
+
+    - name: ln -s ~/ubuntu-setup/zshrc ~/.zshrc
+      file:
+        src: ~/ubuntu-setup/zshrc
+        dest: ~/.zshrc
+        state: link
+      become: False
+
+    - name: sudo chsh --shell /bin/zsh sokly
+      command: chsh --shell /bin/zsh sokly
+
+    - name: https://getcomposer.org/installer
+      get_url:
+        url: https://getcomposer.org/installer
+        dest: /tmp/installer
+      tags: composer
+
+    - name: sudo php -- --install-dir=/usr/local/bin --filename=composer
+      shell: cat /tmp/installer | php -- --install-dir=/usr/local/bin --filename=composer
+      args:
+        creates: /usr/local/bin/composer
+      tags: composer
+
+    - name: sudo chmod a+x /usr/local/bin/composer
+      file: 
+        path: /usr/local/bin/composer
+        mode: a+x
+        state: file
+      tags: composer
+
+    - name: sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+      apt:
+        name: '{{ item }}'
+      with_items:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+      tags: docker
+
+    - name: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+      tags: docker
+
+    - name: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"
+      apt_repository:
+        filename: download_docker_com_linux_ubuntu.list
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+      tags: docker
+
+    - name: sudo apt-get install docker-ce
+      apt:
+        name: docker-ce
+      tags: docker
+
+    - name: https://github.com/docker/compose/releases/download/1.12.0/docker-compose-Linux-x86_64
+      get_url:
+        dest: /usr/local/bin/docker-compose
+        url: https://github.com/docker/compose/releases/download/1.12.0/docker-compose-Linux-x86_64
+        mode: 0755
+      tags: docker
+
+    - name: sudo groupadd docker
+      group:
+        name: docker
+      tags: docker
+
+    - name: sudo usermod -aG docker sokly
+      user:
+        name: sokly
+        groups: docker
+        append: yes
+      tags: docker
