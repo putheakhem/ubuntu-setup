@@ -2,9 +2,10 @@
 
 - hosts: all
   become: true
+  vars:
+    user: '{{ lookup("env", "USER") }}'
 
   tasks:
-
     - name: MANUAL | sudo apt-get update
       apt:
         update_cache: yes
@@ -27,7 +28,7 @@
         repo: ppa:ansible/ansible
       tags: manual
 
-    - name: MANUAL | sudo apt-get install ansible 
+    - name: MANUAL | sudo apt-get install ansible
       apt:
         name: ansible
       tags: manual
@@ -73,6 +74,22 @@
         force: yes
       become: False
 
+    - name: ~/.gitconfig.local
+      file:
+        src: ~/ubuntu-setup/gitconfig.local
+        dest: ~/.gitconfig.local
+        state: link
+        force: yes
+      become: False
+
+    - name: ~/.gitignore_global
+      file:
+        src: ~/ubuntu-setup/gitignore_global
+        dest: ~/.gitignore_global
+        state: link
+        force: yes
+      become: False
+
     - name: git clone git://github.com/robbyrussell/oh-my-zsh.git ~/.oh-my-zsh
       git:
         accept_hostkey: yes
@@ -89,8 +106,8 @@
         state: link
       become: False
 
-    - name: sudo chsh --shell /bin/zsh sokly
-      command: chsh --shell /bin/zsh sokly
+    - name: sudo chsh --shell /bin/zsh {{ user }}
+      command: 'chsh --shell /bin/zsh {{ user }}'
 
     - name: https://getcomposer.org/installer
       get_url:
@@ -105,7 +122,7 @@
       tags: composer
 
     - name: sudo chmod a+x /usr/local/bin/composer
-      file: 
+      file:
         path: /usr/local/bin/composer
         mode: a+x
         state: file
@@ -149,9 +166,36 @@
         name: docker
       tags: docker
 
-    - name: sudo usermod -aG docker sokly
+    - name: sudo usermod -aG docker {{ user }}
       user:
-        name: sokly
+        name: '{{ user }}'
         groups: docker
         append: yes
       tags: docker
+
+    - name: sudo add-apt-repository ppa:webupd8team/atom
+      apt_repository:
+        filename: webupd8team-ubuntu-atom-xenial.list
+        repo: ppa:webupd8team/atom
+      tags: ide
+
+    - name: sudo apt-get install atom
+      apt:
+        name: atom
+      register: atom_install_status
+      tags: ide
+
+    - name: mkdir ~/.atom
+      file:
+        path: ~/.atom
+        state: directory
+      become: False
+      tags: ide
+
+    - name: cp ~/ubuntu-setup/atom/config.cson ~/.atom/config.cson
+      copy:
+        src: ~/ubuntu-setup/atom/config.cson
+        dest: ~/.atom/config.cson
+      when: atom_install_status.changed
+      become: False
+      tags: ide

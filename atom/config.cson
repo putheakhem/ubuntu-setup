@@ -1,0 +1,18 @@
+"*":
+  autosave:
+    enable: true
+  core:
+    closeDeletedFileTabs: true
+    telemetryConsent: "no"
+    themes: [
+      "atom-dark-ui"
+      "one-dark-syntax"
+    ]
+  editor:
+    fontFamily: "DejaVu Sans Mono"
+    fontSize: 12
+    scrollPastEnd: true
+    showIndentGuide: true
+    showInvisibles: true
+  welcome:
+    showOnStartup: false
